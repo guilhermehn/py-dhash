@@ -1,4 +1,5 @@
 import sys, os.path, json
+from glob import glob
 from PIL import Image
 
 def dhash(image, hash_size = 8):
@@ -18,6 +19,7 @@ def dhash(image, hash_size = 8):
   # Convert the binary array to a hexadecimal string.
   decimal_value = 0
   hex_string = []
+
   for index, value in enumerate(difference):
     if value:
       decimal_value += 2**(index % 8)
@@ -30,15 +32,19 @@ def dhash(image, hash_size = 8):
 real_images = 0
 data = {}
 
+files = []
+
 if len(sys.argv[1:]) < 1:
   print('Images must be passed as arguments')
   sys.exit()
 
-for image in sys.argv[1:]:
+for path in sys.argv[1:]:
+  files += glob(path)
+
+for image in files:
   print('Checking image: %s' % image)
 
   print(os.path.isdir(image))
-
 
   if not os.path.isfile(image):
     print('Not a image. Proceeding...')
