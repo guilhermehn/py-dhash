@@ -1,15 +1,19 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import sys, os.path, json
 from glob import glob
 from PIL import Image
 
-def dhash(image, hash_size = 8):
+def dhash(image, hash_size=8):
   # Grayscale and shrink the image in one step.
   image = image.convert('L').resize((hash_size + 1, hash_size), Image.ANTIALIAS)
 
-  pixels = list(image.getdata())
+  # pixels = list(image.getdata())
 
   # Compare adjacent pixels.
   difference = []
+
   for row in range(hash_size):
     for col in range(hash_size):
       pixel_left = image.getpixel((col, row))
@@ -22,43 +26,45 @@ def dhash(image, hash_size = 8):
 
   for index, value in enumerate(difference):
     if value:
-      decimal_value += 2**(index % 8)
-      if (index % 8) == 7:
-        hex_string.append(hex(decimal_value)[2:].rjust(2, '0'))
-        decimal_value = 0
+      decimal_value += 2**(index % hash_size)
+    if (index % hash_size) == hash_size-1:
+      hex_string.append(hex(decimal_value)[2:].rjust(2, '0'))
+      decimal_value = 0
 
   return ''.join(hex_string)
 
-real_images = 0
-data = {}
+def get_images_from_glob(paths):
+  files = []
 
-files = []
+  for filepath in paths:
+    files += glob(filepath)
 
-if len(sys.argv[1:]) < 1:
-  print('Images must be passed as arguments')
-  sys.exit()
+  return [f for f in files if os.path.isfile(f)]
 
-for path in sys.argv[1:]:
-  files += glob(path)
+def data_to_json(data):
+  with open('data.json', 'w') as jsonfile:
+    json.dump(data, jsonfile)
 
-for image in files:
-  print('Checking image: %s' % image)
+def calc_dhash_from_files(files):
+  hashes = {}
 
-  print(os.path.isdir(image))
+  for image in files:
+    img = Image.open(image)
+    image_hash = dhash(img)
 
-  if not os.path.isfile(image):
-    print('Not a image. Proceeding...')
-    continue
+    if image_hash in hashes:
+      hashes[image_hash].append(image)
+    else:
+      hashes[image_hash] = [image]
 
-  real_images += 1
-  print('Gererating hash for: %s' % image)
-  img = Image.open(image)
-  hash = dhash(img)
-  data[image] = hash
-  print('Hash: %s' % hash)
+  return hashes
 
-print('%i images read' % real_images)
-print('Writing json')
+if __name__ == "__main__":
+  if len(sys.argv[1:]) < 1:
+    print('Images must be passed as arguments')
+    sys.exit()
 
-with open('data.json', 'w') as jsonfile:
-  json.dump(data, jsonfile)
+  files = get_images_from_glob(sys.argv[1:])
+  hashes = calc_dhash_from_files(files)
+
+  data_to_json(hashes)
