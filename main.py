@@ -59,12 +59,13 @@ def calc_dhash_from_files(files):
 
   return hashes
 
+def main(glob):
+  files = get_images_from_glob(glob)
+  return calc_dhash_from_files(files)
+
 if __name__ == "__main__":
   if len(sys.argv[1:]) < 1:
     print('Images must be passed as arguments')
     sys.exit()
 
-  files = get_images_from_glob(sys.argv[1:])
-  hashes = calc_dhash_from_files(files)
-
-  data_to_json(hashes)
+  main(sys.argv[1:])
