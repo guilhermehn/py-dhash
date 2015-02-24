@@ -33,7 +33,7 @@ def dhash(image, hash_size=8):
 
   return ''.join(hex_string)
 
-def get_images_from_glob(paths):
+def get_images_from_paths(paths):
   files = []
 
   for filepath in paths:
@@ -46,21 +46,21 @@ def data_to_json(data):
     json.dump(data, jsonfile)
 
 def calc_dhash_from_files(files):
-  hashes = {}
+  result = []
 
   for image in files:
     img = Image.open(image)
     image_hash = dhash(img)
 
-    if image_hash in hashes:
-      hashes[image_hash].append(image)
-    else:
-      hashes[image_hash] = [image]
+    result.append({
+      "path": image,
+      "hash": image_hash
+    })
 
-  return hashes
+  return result
 
-def main(glob):
-  files = get_images_from_glob(glob)
+def main(paths):
+  files = get_images_from_paths(paths)
   return calc_dhash_from_files(files)
 
 if __name__ == "__main__":
@@ -68,4 +68,4 @@ if __name__ == "__main__":
     print('Images must be passed as arguments')
     sys.exit()
 
-  main(sys.argv[1:])
+  print(main(sys.argv[1:]))
